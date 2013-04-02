@@ -12,14 +12,12 @@ import (
 
 const VERSION = "0.1"
 
-var MainLogger *log.Logger
-
 func standardHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
-		MainLogger.Println("-", request.RemoteAddr, "-", request.Method, request.URL)
 		header := w.Header()
-		header.Add("Server", "levelupdb/"+VERSION)
+		header.Add("Server", "levelupdb/" + VERSION + " (someone painted it purple)")
 		fn(w, request)
+		MainLogger.Println("-", request.RemoteAddr, "-", request.Method, request.URL)
 	}
 }
 
@@ -27,7 +25,11 @@ func standardHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFu
 type Config struct {
 	DatabaseLocation string
 	Logging string
+	HttpPort string
 }
+
+var MainLogger *log.Logger
+var DBConfig *Config
 
 func main() {
 
@@ -36,17 +38,17 @@ func main() {
 		panic(fmt.Sprintln("Config file error: ", err))
 	}
 
-	config := new(Config)
-	err = json.Unmarshal(data, config)
+	DBConfig = new(Config)
+	err = json.Unmarshal(data, DBConfig)
 
 	if err != nil {
 		panic(fmt.Sprintln("Config file error: ", err))
 	}
 
 	var writer io.Writer
-	if config.Logging == "stdout" {
+	if DBConfig.Logging == "stdout" {
 		writer = os.Stdout
-	} else if config.Logging == "none" {
+	} else if DBConfig.Logging == "none" {
 		writer = ioutil.Discard
 	} else {
 		writer = os.Stdout // TODO: change this to files.
@@ -57,7 +59,8 @@ func main() {
 	// Server Operations
 	http.HandleFunc("/ping", standardHandler(ping))
 	http.HandleFunc("/", standardHandler(listResources))
+	http.HandleFunc("/buckets/", standardHandler(bucketsOps))
 
-	MainLogger.Println("NOTICE: Server started")
-	http.ListenAndServe(":8198", nil)
+	MainLogger.Println("NOTICE: Server started. Serving port " + DBConfig.HttpPort)
+	http.ListenAndServe(":"+DBConfig.HttpPort, nil)
 }

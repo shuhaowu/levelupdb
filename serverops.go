@@ -44,6 +44,8 @@ func listResources(w http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		w.WriteHeader(404)
-		w.Write([]byte("We're not participating in the html nonsense.\n"))
+		if len(req.URL.Path) == 1 {
+			w.Write([]byte("We're not participating in the html nonsense.\n"))
+		}
 	}
 }

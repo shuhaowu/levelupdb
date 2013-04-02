@@ -1,4 +1,5 @@
 {
-  "DatabaseLocation": ".",
-  "Logging": "stdout"
+  "DatabaseLocation": "./databases",
+  "Logging": "stdout",
+  "HttpPort": "8198"
 }
