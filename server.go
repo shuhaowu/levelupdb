@@ -1,13 +1,13 @@
 package main
 
 import (
-	"net/http"
-	"log"
-	"os"
+	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"fmt"
-	"encoding/json"
+	"log"
+	"net/http"
+	"os"
 )
 
 const VERSION = "0.1"
@@ -15,24 +15,22 @@ const VERSION = "0.1"
 func standardHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		header := w.Header()
-		header.Add("Server", "levelupdb/" + VERSION + " (someone painted it purple)")
+		header.Add("Server", "levelupdb/"+VERSION+" (someone painted it purple)")
 		fn(w, request)
-		MainLogger.Println("-", request.RemoteAddr, "-", request.Method, request.URL)
+		MainLogger.Println("-", request.RemoteAddr, "-", request.Method, request.URL.Path)
 	}
 }
 
-
 type Config struct {
 	DatabaseLocation string
-	Logging string
-	HttpPort string
+	Logging          string
+	HttpPort         string
 }
 
 var MainLogger *log.Logger
 var DBConfig *Config
 
 func main() {
-
 	data, err := ioutil.ReadFile("config.json")
 	if err != nil {
 		panic(fmt.Sprintln("Config file error: ", err))
@@ -54,7 +52,7 @@ func main() {
 		writer = os.Stdout // TODO: change this to files.
 	}
 
-	MainLogger = log.New(writer, "[levelupdb " + VERSION + "] ", log.Ldate | log.Ltime)
+	MainLogger = log.New(writer, "[levelupdb "+VERSION+"] ", log.Ldate|log.Ltime)
 
 	// Server Operations
 	http.HandleFunc("/ping", standardHandler(ping))

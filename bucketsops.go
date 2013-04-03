@@ -1,12 +1,13 @@
 package main
 
 import (
-//	"encoding/json"
+	//	"encoding/json"
 	"net/http"
 	"strings"
 )
 
 const lenPath = len("/buckets/")
+
 // This function just delegates.
 func bucketsOps(w http.ResponseWriter, req *http.Request) {
 	remainingUrl := req.URL.Path[lenPath:]
@@ -17,21 +18,21 @@ func bucketsOps(w http.ResponseWriter, req *http.Request) {
 		length := len(splitted)
 		if length == 2 && splitted[1] == "keys" {
 			switch {
-				case req.Method == "POST":
-					storeObject(w, req, splitted[0], "")
-				case req.Method == "GET":
-					listKeys(w, req, splitted[0])
+			case req.Method == "POST":
+				storeObject(w, req, splitted[0], "")
+			case req.Method == "GET":
+				listKeys(w, req, splitted[0])
 			}
 		} else if length == 3 && splitted[1] == "keys" {
 			bucket := splitted[0]
 			key := splitted[2]
 			switch {
-				case req.Method == "GET":
-					fetchObject(w, req, bucket, key)
-				case req.Method == "PUT" || req.Method == "POST":
-					storeObject(w, req, bucket, key)
-				case req.Method == "DELETE":
-					deleteObject(w, req, bucket, key)
+			case req.Method == "GET":
+				fetchObject(w, req, bucket, key)
+			case req.Method == "PUT" || req.Method == "POST":
+				storeObject(w, req, bucket, key)
+			case req.Method == "DELETE":
+				deleteObject(w, req, bucket, key)
 			}
 		} else if length >= 4 && splitted[1] == "index" {
 			bucket := splitted[0]
