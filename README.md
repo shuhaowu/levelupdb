@@ -1,7 +1,7 @@
 Levelupdb
 =========
 
-A single node high performance key-value database server based on leveldb. 
+A single node high performance key-value database server based on leveldb.
 Written with Go.
 
 Levelupdb is API compatible with the Riak HTTP API (PBC is planned) and any
@@ -25,6 +25,9 @@ HTTP interface (**new riak format only**)
 Remember, this is not a competition. This is a db that solves its own areas and
 allow you to easily transition to Riak :P
 
+Another thing is if any of these differences causes a failure of a client, it
+must be fixed.
+
 There are differences between Riak and Levelupdb:
 
  1. **Consistency is guarenteed**: since Levelupdb runs on a single node,
@@ -41,21 +44,28 @@ There are differences between Riak and Levelupdb:
  5. **SOLR Search is not available**: Maybe down the line..
  6. **Map reduce is not yet available**: This is a planned feature. Erlang map
     reduce probably will never be available. If you rely on this feature, it
-    might not be a good idea to use this in place of riak (riak can run on 
+    might not be a good idea to use this in place of riak (riak can run on
     lowendboxes as well)
  7. **Designed to run on a single node**: Riak is designed to run on a cluster.
     It's performance on a single node may not be optimal. Levelupdb is designed
     to run on lowendboxes and small VPSes. It makes hosting your side projects
     painless. **It wants to host your side projects**.
 
+Some more technical differences:
+
+ - Delete request will not return 404 if the content is not found, but
+   204 instead.
+ - Since we don't deal with conflicts, the vector clock for each object is
+   always the same (for all objects.)
+
 Rational
 --------
 
-This is essentially my brain storming section. 
+This is essentially my brain storming section.
 
 Levelupdb is designed as a high performance database server. The main
 goal is to have a database server that has a minimal footprint but yet can still
-perform well. The target audience is low end boxes and side projects. 
+perform well. The target audience is low end boxes and side projects.
 
 A secondary goal, but very important, is the compatibility with Riak. This means
 that applications developed for levelupdb should be compatible with Riak with

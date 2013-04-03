@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // UUID from http://www.ashishbanerjee.com/home/go/go-generate-uuid
@@ -52,14 +53,30 @@ func fetchObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 }
 
 func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key string) {
+	bkey := []byte(key)
+
+	db, err := Buckets.Get(bucket)
+	if err != nil {
+		w.WriteHeader(500)
+		MainLogger.Println("ERROR: Getting bucket failed with bucket", bucket)
+		return
+	}
+
+	indexDb, err := IndexDbs.Get(bucket)
+	if err != nil {
+		w.WriteHeader(500)
+		MainLogger.Println("ERROR: Getting indexbucket failed with bucket", bucket)
+		return
+	}
+
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		MainLogger.Printf("Error: Error reading request body '%s'.", err)
 		w.WriteHeader(400)
 		return
 	}
-	meta, err := MetaFromRequest(req)
 
+	meta, err := MetaFromRequest(req)
 	if err != nil {
 		w.WriteHeader(500)
 		MainLogger.Println("ERROR: Meta construction failed on header", req.Header)
@@ -73,17 +90,9 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		return
 	}
 
-	db, err := Buckets.Get(bucket)
-	if err != nil {
-		w.WriteHeader(500)
-		MainLogger.Println("ERROR: Getting bucket failed with bucket", bucket)
-		return
-	}
-
 	created := false
 	if key == "" {
-		key, err = GenUUID()
-		if err != nil {
+		if key, err = GenUUID(); err != nil {
 			w.WriteHeader(500)
 			MainLogger.Println("ERROR: Generating UUID Failed.")
 			return
@@ -91,11 +100,41 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		created = true
 	}
 
-	err = db.Put(LWriteOptions, []byte(key), encodedData)
-
+	oldData, err := db.Get(LReadOptions, bkey)
 	if err != nil {
 		w.WriteHeader(500)
+		MainLogger.Println("ERROR: Getting previous data failed.")
+		return
+	}
+
+	var oldIndexes [][2]string
+	if oldData != nil {
+		oldMeta, _, err := DecodeData(oldData)
+		if err != nil {
+			w.WriteHeader(500)
+			MainLogger.Println("ERROR: Decoding previous data error", err)
+			return
+		}
+		oldIndexes = oldMeta.Indexes
+	}
+
+	addedIndexes, deletedIndexes := ComputeIndexesDiff(meta.Indexes, oldIndexes)
+	if err = db.Put(LWriteOptions, []byte(key), encodedData); err != nil {
+		w.WriteHeader(500)
 		MainLogger.Println("ERROR: Writing data failed with key", key, "and data", encodedData)
+		return
+	}
+
+	wb, err := GenerateWriteBatchForIndexes(addedIndexes, deletedIndexes, key, indexDb)
+	if err != nil {
+		w.WriteHeader(500)
+		MainLogger.Println("ERROR: Index writebatch generation failed.")
+		return
+	}
+
+	if err := indexDb.Write(LWriteOptions, wb); err != nil {
+		w.WriteHeader(500)
+		MainLogger.Println("ERROR: Index writes failed.")
 		return
 	}
 
@@ -127,11 +166,47 @@ func deleteObject(w http.ResponseWriter, req *http.Request, bucket string, key s
 		return
 	}
 
-	err := db.Delete(LWriteOptions, []byte(key))
+	bkey := []byte(key)
+	encodedData, _ := db.Get(LReadOptions, bkey) // don't really care about error?
+	if encodedData == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	err := db.Delete(LWriteOptions, bkey)
 	if err != nil {
 		w.WriteHeader(500)
 		MainLogger.Println("ERROR: Deletion failed with key", key)
 		return
 	}
+
+	meta, _, _ := DecodeData(encodedData)
+
+	if meta != nil && len(meta.Indexes) > 0 {
+		indexDb := IndexDbs.GetNoCreate(bucket)
+		if indexDb != nil {
+			var added [][2]string
+			var removed [][2]string
+			for _, indexes := range meta.Indexes {
+				splitted := strings.Split(indexes[1], ",")
+				for _, value := range splitted {
+					removed = append(removed, [2]string{indexes[0], value})
+				}
+			}
+			wb, err := GenerateWriteBatchForIndexes(added, removed, key, indexDb)
+			if err != nil {
+				w.WriteHeader(500)
+				MainLogger.Println("ERROR: Index WriteBatch generation failed with key", key)
+				return
+			}
+
+			if err = indexDb.Write(LWriteOptions, wb); err != nil {
+				w.WriteHeader(500)
+				MainLogger.Println("ERROR: Index deletion failed with key", key)
+				return
+			}
+		}
+	}
+
 	w.WriteHeader(204)
 }

@@ -66,3 +66,42 @@ func TestEncodingDecoding(t *testing.T) {
 		}
 	}
 }
+
+func TestKeyBucket(t *testing.T) {
+	keys := [][]byte{[]byte("yay"), []byte("woo!"), []byte("meow")}
+	expectedResult := bytes.Join(keys, []byte{9})
+
+	var actualResult []byte
+	actualResult = appendDataKey(actualResult, keys[0])
+	actualResult = appendDataKey(actualResult, keys[1])
+	actualResult = appendDataKey(actualResult, keys[2])
+
+	if !bytes.Equal(expectedResult, actualResult) {
+		t.Fatal("KeyBucket: Append failed")
+	}
+
+	removedResult := removeDataKey(actualResult, keys[0])
+	expectedResult = bytes.Join([][]byte{[]byte("woo!"), []byte("meow")}, []byte{9})
+	if !bytes.Equal(expectedResult, removedResult) {
+		t.Fatal("KeyBucket: Remove failed (start)")
+	}
+
+	removedResult = removeDataKey(actualResult, keys[1])
+	expectedResult = bytes.Join([][]byte{[]byte("yay"), []byte("meow")}, []byte{9})
+	if !bytes.Equal(expectedResult, removedResult) {
+		t.Fatal("KeyBucket: Remove failed (middle)")
+	}
+
+	removedResult = removeDataKey(actualResult, keys[2])
+	expectedResult = bytes.Join([][]byte{[]byte("yay"), []byte("woo!")}, []byte{9})
+	if !bytes.Equal(expectedResult, removedResult) {
+		t.Fatal("KeyBucket: Remove failed (end)")
+	}
+
+	decodedKeys := decodeDataKeys(actualResult)
+	for i, k := range decodedKeys {
+		if !bytes.Equal(keys[i], []byte(k)) {
+			t.Fatal("KeyBucket: Decode failed")
+		}
+	}
+}

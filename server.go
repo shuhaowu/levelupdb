@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jmhodges/levigo"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"github.com/jmhodges/levigo"
+	"path"
 )
 
 const VERSION = "0.1"
@@ -31,6 +32,7 @@ type Config struct {
 var MainLogger *log.Logger
 var DBConfig *Config
 var Buckets *Databases
+var IndexDbs *Databases
 
 var LReadOptions *levigo.ReadOptions
 var LWriteOptions *levigo.WriteOptions
@@ -59,6 +61,7 @@ func main() {
 
 	MainLogger = log.New(writer, "[levelupdb "+VERSION+"] ", log.Ldate|log.Ltime)
 	Buckets = GetAllBuckets(DBConfig.DatabaseLocation)
+	IndexDbs = GetAllBuckets(path.Join(DBConfig.DatabaseLocation, "_indexes"))
 	LReadOptions = levigo.NewReadOptions()
 	LWriteOptions = levigo.NewWriteOptions()
 
