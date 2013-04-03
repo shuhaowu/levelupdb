@@ -66,6 +66,7 @@ func main() {
 	http.HandleFunc("/ping", standardHandler(ping))
 	http.HandleFunc("/", standardHandler(listResources))
 	http.HandleFunc("/buckets/", standardHandler(bucketsOps))
+	http.HandleFunc("/stats", standardHandler(stats))
 
 	MainLogger.Println("NOTICE: Server started. Serving port " + DBConfig.HttpPort)
 	http.ListenAndServe(":"+DBConfig.HttpPort, nil)

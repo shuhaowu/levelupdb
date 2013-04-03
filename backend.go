@@ -66,7 +66,7 @@ func (buckets *Databases) GetNoCreate(name string) *levigo.DB {
 
 func (buckets *Databases) Purge(name string) error {
 	if db, ok := buckets.DBMap[name]; ok {
-		db.Close()
+		db.Close() // TODO: use DestroyDatabase instead
 		delete(buckets.DBMap, name)
 		return os.RemoveAll(path.Join(buckets.BaseLocation, name))
 	}

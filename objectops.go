@@ -121,4 +121,17 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 }
 
 func deleteObject(w http.ResponseWriter, req *http.Request, bucket string, key string) {
+	db := Buckets.GetNoCreate(bucket)
+	if db == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	err := db.Delete(LWriteOptions, []byte(key))
+	if err != nil {
+		w.WriteHeader(500)
+		MainLogger.Println("ERROR: Deletion failed with key", key)
+		return
+	}
+	w.WriteHeader(204)
 }
