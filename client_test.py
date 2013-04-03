@@ -5,3 +5,7 @@ client = riak.RiakClient(nodes=[{"host": "127.0.0.1", "http_port": "8198", "pb_p
 
 bucket = client.bucket("test")
 obj = bucket.new("test", "yay")
+obj.store()
+
+robj = bucket.get("test")
+print robj.data

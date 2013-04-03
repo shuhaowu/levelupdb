@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"github.com/jmhodges/levigo"
 )
 
 const VERSION = "0.1"
@@ -29,6 +30,10 @@ type Config struct {
 
 var MainLogger *log.Logger
 var DBConfig *Config
+var Buckets *Databases
+
+var LReadOptions *levigo.ReadOptions
+var LWriteOptions *levigo.WriteOptions
 
 func main() {
 	data, err := ioutil.ReadFile("config.json")
@@ -53,6 +58,9 @@ func main() {
 	}
 
 	MainLogger = log.New(writer, "[levelupdb "+VERSION+"] ", log.Ldate|log.Ltime)
+	Buckets = GetAllBuckets(DBConfig.DatabaseLocation)
+	LReadOptions = levigo.NewReadOptions()
+	LWriteOptions = levigo.NewWriteOptions()
 
 	// Server Operations
 	http.HandleFunc("/ping", standardHandler(ping))
