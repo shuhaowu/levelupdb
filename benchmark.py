@@ -46,12 +46,11 @@ def main():
     obj = bucket.new("test" + str(i), encoded_data=document)
     obj.store()
 
-  def do_get(bucket, i, cache):
-    obj = bucket.get("test"+str(i))
-    cache.append(obj) # this will incur overhead, but no matter. Equal playing field.
+  def do_get(bucket, i,):
+    bucket.get("test"+str(i))
 
-  def do_delete(cache, i):
-    cache[i].delete()
+  def do_delete(bucket, i):
+    bucket.new("test" + str(i)).delete()
 
   def create_func(c, f):
     bucket = c.bucket("test_bucket")
@@ -64,34 +63,23 @@ def main():
     display_result(benchmark(f, NUM_OF_DOCUMENTS), NUM_OF_DOCUMENTS)
     print
 
-  def get_and_cache(c, cache):
-    bucket = c.bucket("test_bucket")
-    def fn(i):
-      do_get(bucket, i, cache)
-    return fn
-
-  def delete(cache):
-    def fn(i):
-      do_delete(cache, i)
-    return fn
-
   riakHttpCache = []
   riakPbcCache = []
   levelupCache = []
 
   #benchmark_one("Riak HTTP Insert", create_func(riakHttpClient, do_insert))
-  #benchmark_one("Riak HTTP Fetch", get_and_cache(riakHttpClient, riakHttpCache))
-  #benchmark_one("Riak HTTP Delete", delete(riakHttpCache))
+  #benchmark_one("Riak HTTP Fetch", create_func(riakHttpClient, do_get))
+  #benchmark_one("Riak HTTP Delete", create_func(riakHttpClient, do_delete))
   riakHttpCache = []
 
   #benchmark_one("Riak PBC Insert", create_func(riakPbcClient, do_insert))
-  #benchmark_one("Riak PBC Fetch", get_and_cache(riakPbcClient, riakPbcCache))
-  #benchmark_one("Riak PBC Delete", delete(riakPbcCache))
+  #benchmark_one("Riak PBC Fetch", create_func(riakPbcClient, do_get))
+  #benchmark_one("Riak PBC Delete", create_func(riakPbcClient, do_delete))
   riakPbcCache = []
 
   benchmark_one("Levelupdb Insert", create_func(levelupClient, do_insert))
-  benchmark_one("Levelupdb Fetch", get_and_cache(levelupClient, levelupCache))
-  benchmark_one("Levelupdb Delete", delete(levelupCache))
+  benchmark_one("Levelupdb Fetch", create_func(levelupClient, do_get))
+  benchmark_one("Levelupdb Delete", create_func(levelupClient, do_delete))
   levelupCache = []
 
   print "Document Size: {0} bytes".format(DOCUMENT_SIZE)

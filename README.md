@@ -56,6 +56,9 @@ License: GPLv3
     Document Size: 8000 bytes
     Number of Documents: 10000
 
+    Typical CPU Usage by Benchmarking Script (Riak): 30%
+    Typical CPU Usage by Benchmarking Script (Levelupdb): 70%
+
 
 
 
