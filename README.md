@@ -43,15 +43,15 @@ License: GPLv3
 
     Benchmarking Levelupdb Insert
     100% complete...
-    Total time: 22.38 seconds
+    Total time: 11.71 seconds
 
     Benchmarking Levelupdb Fetch
     100% complete...
-    Total time: 15.81 seconds
+    Total time: 8.87 seconds
 
     Benchmarking Levelupdb Delete
     100% complete...
-    Total time: 13.15 seconds
+    Total time: 7.39 seconds
 
     Document Size: 8000 bytes
     Number of Documents: 10000
