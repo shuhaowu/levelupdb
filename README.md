@@ -13,6 +13,52 @@ solution.
 
 License: GPLv3
 
+    Latest performance test (512MB, no swap, Vagrant Box, Debian Wheezy, Intel(R) Core(TM) i5-2410M CPU @ 2.30GHz, 1 core)
+    Tests ran independently of each other. The system was reset between HTTP, PBC, and Levelup tests.
+    Configurations are all on their defaults.
+
+    Benchmarking Riak HTTP Insert
+    100% complete...
+    Total time: 92.13 seconds
+
+    Benchmarking Riak HTTP Fetch
+    100% complete...
+    Total time: 63.97 seconds
+
+    Benchmarking Riak HTTP Delete
+    100% complete...
+    Total time: 139.17 seconds
+
+    Benchmarking Riak PBC Insert
+    100% complete...
+    Total time: 48.1 seconds
+
+    Benchmarking Riak PBC Fetch
+    100% complete...
+    Total time: 34.37 seconds
+
+    Benchmarking Riak PBC Delete
+    100% complete...
+    Total time: 81.12 seconds
+
+    Benchmarking Levelupdb Insert
+    100% complete...
+    Total time: 22.38 seconds
+
+    Benchmarking Levelupdb Fetch
+    100% complete...
+    Total time: 15.81 seconds
+
+    Benchmarking Levelupdb Delete
+    100% complete...
+    Total time: 13.15 seconds
+
+    Document Size: 8000 bytes
+    Number of Documents: 10000
+
+
+
+
 Compatibility with Riak
 -----------------------
 

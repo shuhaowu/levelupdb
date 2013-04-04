@@ -2,3 +2,4 @@ activatego
 *.komodoproject
 levelupdb
 databases/
+.vagrant
