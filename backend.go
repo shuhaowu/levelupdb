@@ -11,7 +11,10 @@ import (
 	"os"
 	"path"
 	"strings"
+	"regexp"
 )
+
+// Databases Section
 
 type Databases struct {
 	DBMap        map[string]*levigo.DB
@@ -53,7 +56,7 @@ func (buckets *Databases) Get(name string) (*levigo.DB, error) {
 	}
 	opts := levigo.NewOptions()
 	opts.SetCreateIfMissing(true)
-	opts.SetCache(levigo.NewLRUCache(1 << 30))
+	opts.SetCache(levigo.NewLRUCache(4194304))
 	var err error
 	buckets.DBMap[name], err = levigo.Open(path.Join(buckets.BaseLocation, name), opts)
 	return buckets.DBMap[name], err
@@ -74,6 +77,8 @@ func (buckets *Databases) Purge(name string) error {
 	}
 	return nil
 }
+
+// Generic Meta Section
 
 type Meta struct {
 	Indexes     [][2]string       `json:"I"`
@@ -118,6 +123,8 @@ func MetaToHeaders(headers http.Header, meta *Meta) {
 	}
 	headers.Add("X-Riak-Vclock", "Yay02966e9d038d6332eea23012217f8c4b521eaf92==")
 }
+
+// Index Section
 
 func appendDataKey(keys []byte, key []byte) []byte {
 	if len(keys) > 0 {
@@ -229,6 +236,8 @@ func GenerateWriteBatchForIndexes(added, deleted [][2]string, key string, indexD
 	return wb, nil
 }
 
+// Data Encoding/Decoding Section
+
 func EncodeData(meta *Meta, data []byte) ([]byte, error) {
 	metaString, err := json.Marshal(meta)
 
@@ -271,4 +280,33 @@ func DecodeData(data []byte) (*Meta, []byte, error) {
 
 	// Returning a slice from the original data array should be fine, right?
 	return meta, data[length:], nil
+}
+
+// Link section
+
+var OldLinkRegexp *regexp.Regexp
+var NewLinkRegexp *regexp.Regexp
+
+func initializeLinkRegexp() {
+	OldLinkRegexp := regexp.MustCompile(`</([^/]+)/([^/]+)/([^/]+)>; ?riaktag="([^"]+)"`)
+	NewLinkRegexp := regexp.MustCompile(`</(buckets)/([^/]+)/keys/([^/]+)>; ?riaktag="([^"]+)"`)
+}
+
+func ParseLink(linkstr string) (bucket string, key string, tag string) {
+	match := OldLinkRegexp.FindStringSubmatch(linkstr)
+	if len(match) < 4 {
+		match = NewLinkRegexp.FindStringSubmatch(linkstr)
+		if len(match) < 4 {
+			return "", "", ""
+		}
+	}
+
+	bucket = match[2]
+	key = match[3]
+	if len(match) == 5 {
+		tag = match[4]
+	} else {
+		tag = ""
+	}
+	return
 }

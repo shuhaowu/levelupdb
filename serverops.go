@@ -51,5 +51,5 @@ func listResources(w http.ResponseWriter, req *http.Request) {
 }
 
 func stats(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte("{\"riak_kv_version\":\"1.3.0\",\"riak_api_version\":\"1.3.0\"}"))
+	w.Write([]byte("{\"riak_kv_version\":\"1.3.1\",\"riak_api_version\":\"1.3.1\"}"))
 }

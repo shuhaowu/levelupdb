@@ -63,24 +63,17 @@ def main():
     display_result(benchmark(f, NUM_OF_DOCUMENTS), NUM_OF_DOCUMENTS)
     print
 
-  riakHttpCache = []
-  riakPbcCache = []
-  levelupCache = []
+  benchmark_one("Riak HTTP Insert", create_func(riakHttpClient, do_insert))
+  benchmark_one("Riak HTTP Fetch", create_func(riakHttpClient, do_get))
+  benchmark_one("Riak HTTP Delete", create_func(riakHttpClient, do_delete))
 
-  #benchmark_one("Riak HTTP Insert", create_func(riakHttpClient, do_insert))
-  #benchmark_one("Riak HTTP Fetch", create_func(riakHttpClient, do_get))
-  #benchmark_one("Riak HTTP Delete", create_func(riakHttpClient, do_delete))
-  riakHttpCache = []
-
-  #benchmark_one("Riak PBC Insert", create_func(riakPbcClient, do_insert))
-  #benchmark_one("Riak PBC Fetch", create_func(riakPbcClient, do_get))
-  #benchmark_one("Riak PBC Delete", create_func(riakPbcClient, do_delete))
-  riakPbcCache = []
+  benchmark_one("Riak PBC Insert", create_func(riakPbcClient, do_insert))
+  benchmark_one("Riak PBC Fetch", create_func(riakPbcClient, do_get))
+  benchmark_one("Riak PBC Delete", create_func(riakPbcClient, do_delete))
 
   benchmark_one("Levelupdb Insert", create_func(levelupClient, do_insert))
   benchmark_one("Levelupdb Fetch", create_func(levelupClient, do_get))
   benchmark_one("Levelupdb Delete", create_func(levelupClient, do_delete))
-  levelupCache = []
 
   print "Document Size: {0} bytes".format(DOCUMENT_SIZE)
   print "Number of Documents: {0}".format(NUM_OF_DOCUMENTS)
