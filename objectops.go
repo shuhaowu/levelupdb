@@ -24,27 +24,15 @@ func GenUUID() (string, error) {
 }
 
 func fetchObject(w http.ResponseWriter, req *http.Request, bucket string, key string) {
-	db := Buckets.GetNoCreate(bucket)
-	if db == nil {
-		w.WriteHeader(404)
+	meta, data, err := GetObject(bucket, key)
+	if err != nil {
+		w.WriteHeader(500)
+		MainLogger.Println("ERROR: Getting object failed with err", err)
 		return
 	}
 
-	encodedData, err := db.Get(LReadOptions, []byte(key))
-	if encodedData == nil {
+	if meta == nil {
 		w.WriteHeader(404)
-		return
-	}
-	if err != nil {
-		w.WriteHeader(500)
-		MainLogger.Println("ERROR: Getting database error", err)
-		return
-	}
-
-	meta, data, err := DecodeData(encodedData)
-	if err != nil {
-		w.WriteHeader(500)
-		MainLogger.Println("ERROR: Decoding data error", err)
 		return
 	}
 

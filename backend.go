@@ -282,31 +282,74 @@ func DecodeData(data []byte) (*Meta, []byte, error) {
 	return meta, data[length:], nil
 }
 
+// Object Manipulation Section
+
+func GetObject(bucket, key string) (*Meta, []byte, error){
+	db := Buckets.GetNoCreate(bucket)
+	if db == nil {
+		return nil, nil, nil
+	}
+
+	encodedData, err := db.Get(LReadOptions, []byte(key))
+	if encodedData == nil {
+		return nil, nil, nil
+	}
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	meta, data, err := DecodeData(encodedData)
+	if err != nil {
+		return nil, nil, err
+	}
+	return meta, data, nil
+}
+
 // Link section
 
 var OldLinkRegexp *regexp.Regexp
 var NewLinkRegexp *regexp.Regexp
 
 func initializeLinkRegexp() {
-	OldLinkRegexp := regexp.MustCompile(`</([^/]+)/([^/]+)/([^/]+)>; ?riaktag="([^"]+)"`)
-	NewLinkRegexp := regexp.MustCompile(`</(buckets)/([^/]+)/keys/([^/]+)>; ?riaktag="([^"]+)"`)
+	OldLinkRegexp = regexp.MustCompile(`</([^/]+)/([^/]+)/([^/]+)>; ?riaktag="([^"]+)"`)
+	NewLinkRegexp = regexp.MustCompile(`</(buckets)/([^/]+)/keys/([^/]+)>; ?riaktag="([^"]+)"`)
 }
 
-func ParseLink(linkstr string) (bucket string, key string, tag string) {
+type Link struct {
+	bucket string
+	key string
+	tag string
+}
+
+func ParseLink(linkstr string) *Link {
+	linkstr = strings.Trim(linkstr, " ")
 	match := OldLinkRegexp.FindStringSubmatch(linkstr)
-	if len(match) < 4 {
+	if match == nil || len(match) < 4 {
 		match = NewLinkRegexp.FindStringSubmatch(linkstr)
-		if len(match) < 4 {
-			return "", "", ""
+		if match == nil || len(match) < 4 {
+			return nil
 		}
 	}
 
-	bucket = match[2]
-	key = match[3]
+	link := new(Link)
+	link.bucket = match[2]
+	link.key = match[3]
 	if len(match) == 5 {
-		tag = match[4]
-	} else {
-		tag = ""
+		link.tag = match[4]
 	}
-	return
+	return link
+}
+
+func QueryLinks(linksheader, bucket, tag string) []*Link {
+	links := strings.Split(linksheader, ",")
+
+	results := make([]*Link, 0, len(links))
+	for _, linkstr := range links {
+		link := ParseLink(linkstr)
+		if (link != nil) && (bucket == "_" || link.bucket == bucket) && (tag == "_" || link.tag == tag) {
+			results = append(results, link)
+		}
+	}
+	return results
 }

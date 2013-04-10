@@ -105,3 +105,77 @@ func TestKeyBucket(t *testing.T) {
 		}
 	}
 }
+
+func TestLinkDecode(t *testing.T) {
+	initializeLinkRegexp()
+	links := `</riak/list/1>; riaktag="previous"`
+	link := ParseLink(links)
+	if link.bucket != "list" {
+		t.Fatal("Link: bucket decode failure")
+	}
+
+	if link.key != "1" {
+		t.Fatal("Link: key decode failure")
+	}
+
+	if link.tag != "previous" {
+		t.Fatal("Link: tag decode failure")
+	}
+}
+
+func TestQueryLinks(t *testing.T) {
+	initializeLinkRegexp()
+	links := `</riak/list/1>; riaktag="previous", </riak/list/3>; riaktag="next", </riak/list2/1>; riaktag="next"`
+	results := QueryLinks(links, "list", "previous")
+	if len(results) != 1 {
+		t.Fatal("QueryLinks: Results not length 1")
+	}
+
+	if results[0].bucket != "list" || results[0].tag != "previous" || results[0].key != "1" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+
+	results = QueryLinks(links, "list", "_")
+	if len(results) != 2 {
+		t.Fatal("QueryLinks: Results not length 2")
+	}
+
+	if results[0].bucket != "list" || results[0].tag != "previous" || results[0].key != "1" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+
+	if results[1].bucket != "list" || results[1].tag != "next" || results[1].key != "3" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+
+	results = QueryLinks(links, "_", "next")
+	if len(results) != 2 {
+		t.Fatal("QueryLinks: Results not length 2")
+	}
+
+	if results[0].bucket != "list" || results[0].tag != "next" || results[0].key != "3" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+
+	if results[1].bucket != "list2" || results[1].tag != "next" || results[1].key != "1" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+
+	results = QueryLinks(links, "_", "_")
+
+	if len(results) != 3 {
+		t.Fatal("QueryLinks: Results not length 3")
+	}
+
+	if results[0].bucket != "list" || results[0].tag != "previous" || results[0].key != "1" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+
+	if results[1].bucket != "list" || results[1].tag != "next" || results[1].key != "3" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+
+	if results[2].bucket != "list2" || results[2].tag != "next" || results[2].key != "1" {
+		t.Fatal("QueryLinks: Wrong result.")
+	}
+}

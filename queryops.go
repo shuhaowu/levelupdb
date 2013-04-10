@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 type JSONIndexes struct {
@@ -48,6 +49,14 @@ func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, ind
 }
 
 func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key string, walks []string) {
+	// var results []*Link
+	for _, phasestr := range walks {
+		phase := strings.Split(phasestr, ",")
+		if len(phase) != 3 {
+			w.WriteHeader(400)
+			return
+		}
+	}
 }
 
 func mapred(w http.ResponseWriter, req *http.Request) {

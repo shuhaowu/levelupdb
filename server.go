@@ -38,7 +38,6 @@ var LReadOptions *levigo.ReadOptions
 var LWriteOptions *levigo.WriteOptions
 
 func main() {
-
 	initializeLinkRegexp()
 
 	data, err := ioutil.ReadFile("config.json")
