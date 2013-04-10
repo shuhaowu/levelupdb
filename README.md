@@ -13,54 +13,54 @@ solution.
 
 License: GPLv3
 
-    Latest performance test (512MB, no swap, Vagrant Box, Debian Wheezy, Intel(R) Core(TM) i5-2410M CPU @ 2.30GHz, 1 core)
+    Latest performance test (512MB, no swap, Vagrant Box, Debian Wheezy, Intel(R) Core(TM) i5-2410M CPU @ 2.30GHz, 1 core, SanDisk Extreme SSD 240GB)
     Tests ran independently of each other. The system was reset between HTTP, PBC, and Levelup tests.
     Configurations are all on their defaults.
 
+    riak (1.3.1 2013-04-03) Debian x86_64
+    levelupdb 0.1 (master), go1.0.3 Debian x86_64
+
     Benchmarking Riak HTTP Insert
     100% complete...
-    Total time: 92.13 seconds
+    Total time: 90.14 seconds
 
     Benchmarking Riak HTTP Fetch
     100% complete...
-    Total time: 63.97 seconds
+    Total time: 59.98 seconds
 
     Benchmarking Riak HTTP Delete
     100% complete...
-    Total time: 139.17 seconds
+    Total time: 143.51 seconds
 
-    Benchmarking Riak PBC Insert
+    Benchmarking Riak PBC InserBenchmarking Riak PBC Insert
     100% complete...
-    Total time: 48.1 seconds
+    Total time: 48.14 seconds
 
     Benchmarking Riak PBC Fetch
     100% complete...
-    Total time: 34.37 seconds
+    Total time: 31.27 seconds
 
     Benchmarking Riak PBC Delete
     100% complete...
-    Total time: 81.12 seconds
+    Total time: 96.25 seconds
 
     Benchmarking Levelupdb Insert
     100% complete...
-    Total time: 11.71 seconds
+    Total time: 19.77 seconds
 
     Benchmarking Levelupdb Fetch
     100% complete...
-    Total time: 8.87 seconds
+    Total time: 14.71 seconds
 
     Benchmarking Levelupdb Delete
     100% complete...
-    Total time: 7.39 seconds
+    Total time: 11.97 seconds
 
     Document Size: 8000 bytes
     Number of Documents: 10000
 
     Typical CPU Usage by Benchmarking Script (Riak): 30%
     Typical CPU Usage by Benchmarking Script (Levelupdb): 70%
-
-
-
 
 Compatibility with Riak
 -----------------------
