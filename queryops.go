@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"levelupdb/backend"
 )
 
 type JSONIndexes struct {
@@ -20,23 +21,23 @@ func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, ind
 	var r JSONIndexes
 	searchKey := []byte(indexField + "~" + startValue)
 	if endValue == "" {
-		keys, err := indexDb.Get(LReadOptions, searchKey)
+		keys, err := indexDb.Get(backend.LReadOptions, searchKey)
 		if err != nil {
 			w.WriteHeader(500)
 			MainLogger.Println("ERROR: Getting index values failed with", searchKey)
 			return
 		}
 
-		r.Keys = decodeDataKeys(keys)
+		r.Keys = backend.DecodeDataKeys(keys)
 	} else {
 		endSearchKey := []byte(indexField + "~" + endValue)
-		it := indexDb.NewIterator(LReadOptions)
+		it := indexDb.NewIterator(backend.LReadOptions)
 		it.Seek(searchKey)
 		for it = it; it.Valid(); it.Next() {
 			if bytes.Compare(it.Key(), endSearchKey) > 0 {
 				break
 			}
-			r.Keys = append(r.Keys, decodeDataKeys(it.Value())...)
+			r.Keys = append(r.Keys, backend.DecodeDataKeys(it.Value())...)
 		}
 	}
 	d, err := json.Marshal(r)

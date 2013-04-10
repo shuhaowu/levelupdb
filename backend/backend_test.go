@@ -1,4 +1,4 @@
-package main
+package backend
 
 import (
 	"bytes"
@@ -98,7 +98,7 @@ func TestKeyBucket(t *testing.T) {
 		t.Fatal("KeyBucket: Remove failed (end)")
 	}
 
-	decodedKeys := decodeDataKeys(actualResult)
+	decodedKeys := DecodeDataKeys(actualResult)
 	for i, k := range decodedKeys {
 		if !bytes.Equal(keys[i], []byte(k)) {
 			t.Fatal("KeyBucket: Decode failed")
@@ -107,7 +107,7 @@ func TestKeyBucket(t *testing.T) {
 }
 
 func TestLinkDecode(t *testing.T) {
-	initializeLinkRegexp()
+	InitializeLinkRegexp()
 	links := `</riak/list/1>; riaktag="previous"`
 	link := ParseLink(links)
 	if link.bucket != "list" {
@@ -124,7 +124,7 @@ func TestLinkDecode(t *testing.T) {
 }
 
 func TestQueryLinks(t *testing.T) {
-	initializeLinkRegexp()
+	InitializeLinkRegexp()
 	links := `</riak/list/1>; riaktag="previous", </riak/list/3>; riaktag="next", </riak/list2/1>; riaktag="next"`
 	results := QueryLinks(links, "list", "previous")
 	if len(results) != 1 {

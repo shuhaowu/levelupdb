@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jmhodges/levigo"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path"
+	"levelupdb/backend"
 )
 
 const VERSION = "0.1"
@@ -31,14 +31,11 @@ type Config struct {
 
 var MainLogger *log.Logger
 var DBConfig *Config
-var Buckets *Databases
-var IndexDbs *Databases
-
-var LReadOptions *levigo.ReadOptions
-var LWriteOptions *levigo.WriteOptions
+var Buckets *backend.Databases
+var IndexDbs *backend.Databases
 
 func main() {
-	initializeLinkRegexp()
+	backend.Initialize()
 
 	data, err := ioutil.ReadFile("config.json")
 	if err != nil {
@@ -62,10 +59,8 @@ func main() {
 	}
 
 	MainLogger = log.New(writer, "[levelupdb "+VERSION+"] ", log.Ldate|log.Ltime)
-	Buckets = GetAllBuckets(DBConfig.DatabaseLocation)
-	IndexDbs = GetAllBuckets(path.Join(DBConfig.DatabaseLocation, "_indexes"))
-	LReadOptions = levigo.NewReadOptions()
-	LWriteOptions = levigo.NewWriteOptions()
+	Buckets = backend.GetAllBuckets(DBConfig.DatabaseLocation)
+	IndexDbs = backend.GetAllBuckets(path.Join(DBConfig.DatabaseLocation, "_indexes"))
 
 	// Server Operations
 	http.HandleFunc("/ping", standardHandler(ping))
