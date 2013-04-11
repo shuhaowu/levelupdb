@@ -76,7 +76,52 @@ func (database *Database) GetObject(bucket, key string) (*Meta, []byte, error) {
 	return meta, data, nil
 }
 
-func (database *Database) StoreObject(bucket, key string, meta *Meta, data []byte) {
+func (database *Database) StoreObject(bucket, key string, meta *Meta, data []byte) error {
+	db, err := database.GetBucket(bucket)
+	if err != nil {
+		return err
+	}
+
+	indexDb, err := database.IndexDatabase.GetBucket(bucket)
+	if err != nil {
+		return err
+	}
+
+	encodedData, err := EncodeData(meta, data)
+	if err != nil {
+		return err
+	}
+
+	bkey := []byte(key)
+	oldData, err := db.Get(LReadOptions, bkey)
+	if err != nil {
+		return err
+	}
+
+	var oldIndexes [][2]string
+	if oldData != nil {
+		oldMeta, _, err := DecodeData(oldData)
+		if err != nil {
+			return err
+		}
+		oldIndexes = oldMeta.Indexes
+	}
+
+	if err = db.Put(LWriteOptions, bkey, encodedData); err != nil {
+		return err
+	}
+
+	addedIndexes, deletedIndexes := ComputeIndexesDiff(meta.Indexes, oldIndexes)
+	wb, err := GenerateWriteBatchForIndexes(addedIndexes, deletedIndexes, key, indexDb)
+	if err != nil {
+		return err
+	}
+
+	if err := indexDb.Write(LWriteOptions, wb); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (database *Database) DeleteObject(bucket, key string) (int, error){

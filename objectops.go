@@ -41,22 +41,6 @@ func fetchObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 }
 
 func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key string) {
-	bkey := []byte(key)
-
-	db, err := database.GetBucket(bucket)
-	if err != nil {
-		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Getting bucket failed with bucket", bucket)
-		return
-	}
-
-	indexDb, err := indexDatabase.GetBucket(bucket)
-	if err != nil {
-		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Getting indexbucket failed with bucket", bucket)
-		return
-	}
-
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		mainLogger.Printf("Error: Error reading request body '%s'.", err)
@@ -71,13 +55,6 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		return
 	}
 
-	encodedData, err := backend.EncodeData(meta, data)
-	if err != nil {
-		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Data encoding failed on data", string(data))
-		return
-	}
-
 	created := false
 	if key == "" {
 		if key, err = GenUUID(); err != nil {
@@ -88,41 +65,9 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		created = true
 	}
 
-	oldData, err := db.Get(backend.LReadOptions, bkey)
-	if err != nil {
+	if err := database.StoreObject(bucket, key, meta, data); err != nil {
 		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Getting previous data failed.")
-		return
-	}
-
-	var oldIndexes [][2]string
-	if oldData != nil {
-		oldMeta, _, err := backend.DecodeData(oldData)
-		if err != nil {
-			w.WriteHeader(500)
-			mainLogger.Println("ERROR: Decoding previous data error", err)
-			return
-		}
-		oldIndexes = oldMeta.Indexes
-	}
-
-	addedIndexes, deletedIndexes := backend.ComputeIndexesDiff(meta.Indexes, oldIndexes)
-	if err = db.Put(backend.LWriteOptions, []byte(key), encodedData); err != nil {
-		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Writing data failed with key", key, "and data", encodedData)
-		return
-	}
-
-	wb, err := backend.GenerateWriteBatchForIndexes(addedIndexes, deletedIndexes, key, indexDb)
-	if err != nil {
-		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Index writebatch generation failed.")
-		return
-	}
-
-	if err := indexDb.Write(backend.LWriteOptions, wb); err != nil {
-		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Index writes failed.")
+		mainLogger.Println("ERROR: Backend store object failed with", err)
 		return
 	}
 
@@ -132,6 +77,8 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		w.Header().Add("Location", "/buckets/"+bucket+"/keys/"+key)
 	}
 
+
+	// This is ugly.
 	if returnbody {
 		meta.ToHeaders(w.Header())
 		if created {
