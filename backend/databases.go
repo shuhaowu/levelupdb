@@ -46,7 +46,7 @@ func NewDatabase(databaseLocation string) *Database {
 		}
 		opts := levigo.NewOptions()
 		opts.SetCreateIfMissing(true)
-		opts.SetCache(levigo.NewLRUCache(1 << 30))
+		opts.SetCache(levigo.NewLRUCache(4194304))
 		buckets.DBMap[file.Name()], err = levigo.Open(path.Join(databaseLocation, file.Name()), opts)
 		if err != nil {
 			panic(err)

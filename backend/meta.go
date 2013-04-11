@@ -34,7 +34,7 @@ func MetaFromRequest(req *http.Request) (*Meta, error) {
 	return meta, nil
 }
 
-func MetaToHeaders(headers http.Header, meta *Meta) {
+func (meta *Meta) ToHeaders(headers http.Header) {
 	if meta.Links != "" {
 		headers.Add("Link", meta.Links)
 	}

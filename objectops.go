@@ -37,7 +37,7 @@ func fetchObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		return
 	}
 
-	backend.MetaToHeaders(w.Header(), meta)
+	meta.ToHeaders(w.Header())
 	w.Write(data)
 }
 
@@ -134,7 +134,7 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 	}
 
 	if returnbody {
-		backend.MetaToHeaders(w.Header(), meta)
+		meta.ToHeaders(w.Header())
 		if created {
 			w.WriteHeader(201)
 		}
