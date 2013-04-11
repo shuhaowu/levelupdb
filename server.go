@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"levelupdb/backend"
 	"log"
 	"net/http"
 	"os"
 	"path"
-	"levelupdb/backend"
 )
 
 const VERSION = "0.1"
@@ -69,6 +69,7 @@ func main() {
 
 	database = backend.NewDatabase(globalConfig.DatabaseLocation)
 	indexDatabase = backend.NewDatabase(path.Join(globalConfig.DatabaseLocation, "_indexes"))
+	database.IndexDatabase = indexDatabase
 
 	// Server Operations
 	http.HandleFunc("/ping", standardHandler(ping))

@@ -11,6 +11,7 @@ import (
 type Database struct {
 	DBMap        map[string]*levigo.DB
 	BaseLocation string
+	IndexDatabase *Database
 }
 
 var LReadOptions *levigo.ReadOptions

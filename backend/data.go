@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"strings"
 )
 
 func EncodeData(meta *Meta, data []byte) ([]byte, error) {
@@ -76,9 +77,46 @@ func (database *Database) GetObject(bucket, key string) (*Meta, []byte, error) {
 }
 
 func (database *Database) StoreObject(bucket, key string, meta *Meta, data []byte) {
-
 }
 
-func (database *Database) DeleteObject(bucket, key string) {
+func (database *Database) DeleteObject(bucket, key string) (int, error){
+	db := database.GetBucketNoCreate(bucket)
+	if db == nil {
+		return 404, nil
+	}
 
+	bkey := []byte(key)
+	encodedData, _ := db.Get(LReadOptions, bkey)
+	if encodedData == nil {
+		return 404, nil
+	}
+
+	err := db.Delete(LWriteOptions, bkey)
+	if err != nil {
+		return 500, err
+	}
+
+	meta, _, _ := DecodeData(encodedData)
+	if meta != nil && len(meta.Indexes) > 0 {
+		indexDb := database.IndexDatabase.GetBucketNoCreate(bucket)
+		if indexDb != nil {
+			var added [][2]string
+			var removed [][2]string
+			for _, indexes := range meta.Indexes {
+				splitted := strings.Split(indexes[1], ",")
+				for _, value := range splitted {
+					removed = append(removed, [2]string{indexes[0], value})
+				}
+			}
+			wb, err := GenerateWriteBatchForIndexes(added, removed, key, indexDb)
+			if err != nil {
+				return 500, err
+			}
+
+			if err = indexDb.Write(LWriteOptions, wb); err != nil {
+				return 500, err
+			}
+		}
+	}
+	return 204, nil
 }

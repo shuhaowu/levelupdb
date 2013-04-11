@@ -5,9 +5,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"io/ioutil"
-	"net/http"
-	"strings"
 	"levelupdb/backend"
+	"net/http"
 )
 
 // UUID from http://www.ashishbanerjee.com/home/go/go-generate-uuid
@@ -149,53 +148,11 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 }
 
 func deleteObject(w http.ResponseWriter, req *http.Request, bucket string, key string) {
-	db := database.GetBucketNoCreate(bucket)
-	if db == nil {
-		w.WriteHeader(404)
-		return
-	}
+	code, err := database.DeleteObject(bucket, key)
 
-	bkey := []byte(key)
-	encodedData, _ := db.Get(backend.LReadOptions, bkey) // don't really care about error?
-	if encodedData == nil {
-		w.WriteHeader(404)
-		return
-	}
-
-	err := db.Delete(backend.LWriteOptions, bkey)
 	if err != nil {
-		w.WriteHeader(500)
-		mainLogger.Println("ERROR: Deletion failed with key", key)
-		return
+		mainLogger.Println("ERROR: During delete...:w", err)
 	}
 
-	meta, _, _ := backend.DecodeData(encodedData)
-
-	if meta != nil && len(meta.Indexes) > 0 {
-		indexDb := indexDatabase.GetBucketNoCreate(bucket)
-		if indexDb != nil {
-			var added [][2]string
-			var removed [][2]string
-			for _, indexes := range meta.Indexes {
-				splitted := strings.Split(indexes[1], ",")
-				for _, value := range splitted {
-					removed = append(removed, [2]string{indexes[0], value})
-				}
-			}
-			wb, err := backend.GenerateWriteBatchForIndexes(added, removed, key, indexDb)
-			if err != nil {
-				w.WriteHeader(500)
-				mainLogger.Println("ERROR: Index WriteBatch generation failed with key", key)
-				return
-			}
-
-			if err = indexDb.Write(backend.LWriteOptions, wb); err != nil {
-				w.WriteHeader(500)
-				mainLogger.Println("ERROR: Index deletion failed with key", key)
-				return
-			}
-		}
-	}
-
-	w.WriteHeader(204)
+	w.WriteHeader(code)
 }
