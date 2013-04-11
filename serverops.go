@@ -38,7 +38,7 @@ func listResources(w http.ResponseWriter, req *http.Request) {
 	if header.Get("Accept") == "application/json" {
 		data, err := json.Marshal(resources)
 		if err != nil {
-			MainLogger.Fatalln("Decoding resources json failed:", resources)
+			mainLogger.Fatalln("Decoding resources json failed:", resources)
 		} else {
 			w.Write(data)
 		}

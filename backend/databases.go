@@ -8,7 +8,7 @@ import (
 	"github.com/jmhodges/levigo"
 )
 
-type Databases struct {
+type Database struct {
 	DBMap        map[string]*levigo.DB
 	BaseLocation string
 }
@@ -28,8 +28,8 @@ func InitializeLeveldbOptions() {
 
 // Will panic if there is a problem with the database.
 // Should only be called on server initialization.
-func GetAllBuckets(databaseLocation string) *Databases {
-	buckets := new(Databases)
+func NewDatabase(databaseLocation string) *Database {
+	buckets := new(Database)
 	buckets.DBMap = make(map[string]*levigo.DB)
 	buckets.BaseLocation = databaseLocation
 
@@ -55,7 +55,7 @@ func GetAllBuckets(databaseLocation string) *Databases {
 	return buckets
 }
 
-func (buckets *Databases) Get(name string) (*levigo.DB, error) {
+func (buckets *Database) GetBucket(name string) (*levigo.DB, error) {
 	if db, ok := buckets.DBMap[name]; ok {
 		return db, nil
 	}
@@ -67,14 +67,14 @@ func (buckets *Databases) Get(name string) (*levigo.DB, error) {
 	return buckets.DBMap[name], err
 }
 
-func (buckets *Databases) GetNoCreate(name string) *levigo.DB {
+func (buckets *Database) GetBucketNoCreate(name string) *levigo.DB {
 	if db, ok := buckets.DBMap[name]; ok {
 		return db
 	}
 	return nil
 }
 
-func (buckets *Databases) Purge(name string) error {
+func (buckets *Database) DestroyBucket(name string) error {
 	if db, ok := buckets.DBMap[name]; ok {
 		db.Close() // TODO: use DestroyDatabase instead
 		delete(buckets.DBMap, name)

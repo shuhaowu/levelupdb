@@ -19,7 +19,7 @@ func standardHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFu
 		header := w.Header()
 		header.Add("Server", "levelupdb/"+VERSION+" (someone painted it purple)")
 		fn(w, request)
-		MainLogger.Println("-", request.RemoteAddr, "-", request.Method, request.URL.Path)
+		mainLogger.Println("-", request.RemoteAddr, "-", request.Method, request.URL.Path)
 	}
 }
 
@@ -29,38 +29,46 @@ type Config struct {
 	HttpPort         string
 }
 
-var MainLogger *log.Logger
-var DBConfig *Config
-var Buckets *backend.Databases
-var IndexDbs *backend.Databases
-
-func main() {
-	backend.Initialize()
-
+func initializeConfig() *Config {
 	data, err := ioutil.ReadFile("config.json")
 	if err != nil {
 		panic(fmt.Sprintln("Config file error: ", err))
 	}
 
-	DBConfig = new(Config)
-	err = json.Unmarshal(data, DBConfig)
+	config := new(Config)
+	err = json.Unmarshal(data, config)
 
 	if err != nil {
 		panic(fmt.Sprintln("Config file error: ", err))
 	}
+	return config
+}
 
+func initializeLogger() *log.Logger {
 	var writer io.Writer
-	if DBConfig.Logging == "stdout" {
+	if globalConfig.Logging == "stdout" {
 		writer = os.Stdout
-	} else if DBConfig.Logging == "none" {
+	} else if globalConfig.Logging == "none" {
 		writer = ioutil.Discard
 	} else {
 		writer = os.Stdout // TODO: change this to files.
 	}
 
-	MainLogger = log.New(writer, "[levelupdb "+VERSION+"] ", log.Ldate|log.Ltime)
-	Buckets = backend.GetAllBuckets(DBConfig.DatabaseLocation)
-	IndexDbs = backend.GetAllBuckets(path.Join(DBConfig.DatabaseLocation, "_indexes"))
+	return log.New(writer, "[levelupdb "+VERSION+"] ", log.Ldate|log.Ltime)
+}
+
+var mainLogger *log.Logger
+var globalConfig *Config
+var database *backend.Database
+var indexDatabase *backend.Database
+
+func main() {
+	backend.Initialize()
+	globalConfig = initializeConfig()
+	mainLogger = initializeLogger()
+
+	database = backend.NewDatabase(globalConfig.DatabaseLocation)
+	indexDatabase = backend.NewDatabase(path.Join(globalConfig.DatabaseLocation, "_indexes"))
 
 	// Server Operations
 	http.HandleFunc("/ping", standardHandler(ping))
@@ -68,6 +76,6 @@ func main() {
 	http.HandleFunc("/buckets/", standardHandler(bucketsOps))
 	http.HandleFunc("/stats", standardHandler(stats))
 
-	MainLogger.Println("NOTICE: Server started. Serving port " + DBConfig.HttpPort)
-	http.ListenAndServe(":"+DBConfig.HttpPort, nil)
+	mainLogger.Println("NOTICE: Server started. Serving port " + globalConfig.HttpPort)
+	http.ListenAndServe(":"+globalConfig.HttpPort, nil)
 }

@@ -13,7 +13,7 @@ type JSONIndexes struct {
 }
 
 func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, indexField string, startValue string, endValue string) {
-	indexDb := IndexDbs.GetNoCreate(bucket)
+	indexDb := indexDatabase.GetBucketNoCreate(bucket)
 	if indexDb == nil {
 		w.WriteHeader(404)
 		return
@@ -24,7 +24,7 @@ func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, ind
 		keys, err := indexDb.Get(backend.LReadOptions, searchKey)
 		if err != nil {
 			w.WriteHeader(500)
-			MainLogger.Println("ERROR: Getting index values failed with", searchKey)
+			mainLogger.Println("ERROR: Getting index values failed with", searchKey)
 			return
 		}
 
@@ -43,14 +43,13 @@ func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, ind
 	d, err := json.Marshal(r)
 	if err != nil {
 		w.WriteHeader(500)
-		MainLogger.Println("ERROR: JSON decode failed with ", r.Keys)
+		mainLogger.Println("ERROR: JSON decode failed with ", r.Keys)
 		return
 	}
 	w.Write(d)
 }
 
 func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key string, walks []string) {
-	// var results []*Link
 	for _, phasestr := range walks {
 		phase := strings.Split(phasestr, ",")
 		if len(phase) != 3 {

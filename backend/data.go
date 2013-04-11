@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-
 )
 
 func EncodeData(meta *Meta, data []byte) ([]byte, error) {
@@ -54,8 +53,8 @@ func DecodeData(data []byte) (*Meta, []byte, error) {
 
 // Object Manipulation Section
 
-func GetObject(bucket, key string, buckets *Databases) (*Meta, []byte, error){
-	db := buckets.GetNoCreate(bucket)
+func (database *Database) GetObject(bucket, key string) (*Meta, []byte, error) {
+	db := database.GetBucketNoCreate(bucket)
 	if db == nil {
 		return nil, nil, nil
 	}
@@ -74,4 +73,12 @@ func GetObject(bucket, key string, buckets *Databases) (*Meta, []byte, error){
 		return nil, nil, err
 	}
 	return meta, data, nil
+}
+
+func (database *Database) StoreObject(bucket, key string, meta *Meta, data []byte) {
+
+}
+
+func (database *Database) DeleteObject(bucket, key string) {
+
 }
