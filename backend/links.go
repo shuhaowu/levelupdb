@@ -50,3 +50,7 @@ func QueryLinks(linksheader, bucket, tag string) []*Link {
 	}
 	return results
 }
+
+func (database *Database) GetObjectFromLink(link *Link) (*Meta, []byte, error){
+	return database.GetObject(link.bucket, link.key)
+}

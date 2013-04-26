@@ -6,6 +6,9 @@ import (
 	"levelupdb/backend"
 	"net/http"
 	"strings"
+	"mime/multipart"
+	"net/textproto"
+	"container/list"
 )
 
 type JSONIndexes struct {
@@ -49,14 +52,83 @@ func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, ind
 	w.Write(d)
 }
 
+
+// Algorithm is BFS. Stolen from Wikipedia :)
 func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key string, walks []string) {
-	for _, phasestr := range walks {
-		phase := strings.Split(phasestr, ",")
+	if len(walks) < 1 {
+		w.WriteHeader(400)
+		return
+	}
+
+	meta, _, err := database.GetObject(bucket, key)
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	} else if meta == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	metaToExplore := list.New()
+	metaToExplore.PushBack(meta)
+
+	multipartBuffer := new(bytes.Buffer)
+	multipartWriter := multipart.NewWriter(multipartBuffer)
+
+	for i, walk := range walks {
+		phase := strings.Split(walk, ",")
 		if len(phase) != 3 {
 			w.WriteHeader(400)
 			return
 		}
+
+		phasepartBuffer := new(bytes.Buffer)
+		phasepartWriter := multipart.NewWriter(phasepartBuffer)
+
+		nextMeta := list.New()
+		for node := metaToExplore.Front(); node != nil; node = node.Next() {
+			meta := node.Value.(*backend.Meta)
+			links := backend.QueryLinks(meta.Links, phase[0], phase[1])
+			for _, link := range links {
+				meta, body, err := database.GetObjectFromLink(link)
+				if err != nil {
+					w.WriteHeader(500)
+					return
+				} else if meta == nil {
+					continue
+				}
+
+				if i + 1 == len(walks) || phase[2] == "1" {
+					partHeader := new(http.Header)
+					meta.ToHeaders(*partHeader)
+					wr, err := phasepartWriter.CreatePart(textproto.MIMEHeader(*partHeader))
+					if err != nil {
+						w.WriteHeader(500)
+						return
+					}
+					wr.Write(body)
+				}
+
+				if i + 1 < len(walks) {
+					nextMeta.PushBack(meta)
+				}
+
+			}
+		}
+		metaToExplore = nextMeta
+		phaseHeader := new(textproto.MIMEHeader)
+		phaseHeader.Set("Content-Type", "multipart/mixed; boundary=" + phasepartWriter.Boundary())
+		phasepartWriter.Close()
+		wr, err := multipartWriter.CreatePart(*phaseHeader)
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+
+		wr.Write(phasepartBuffer.Bytes())
 	}
+
+	w.Write(multipartBuffer.Bytes())
 }
 
 func mapred(w http.ResponseWriter, req *http.Request) {

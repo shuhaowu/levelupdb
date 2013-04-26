@@ -194,5 +194,48 @@ class KVTests(unittest.TestCase):
     with self.assertRaises(riak.RiakError):
       bucket.new('k', 'a').add_index('field1', 'value1')
 
+  def test_store_and_get_links(self):
+    # Create the object...
+    bucket = self.client.bucket(self.bucket_name)
+    bucket.new(key="test_store_and_get_links", encoded_data='2',
+               content_type='application/octet-stream') \
+        .add_link(bucket.new("foo1")) \
+        .add_link(bucket.new("foo2"), "tag") \
+        .add_link(bucket.new("foo3"), "tag2!@#%^&*)") \
+        .store()
+    obj = bucket.get("test_store_and_get_links")
+    links = obj.links
+    self.assertEqual(len(links), 3)
+    for bucket, key, tag in links:
+        if (key == "foo1"):
+            self.assertEqual(bucket, self.bucket_name)
+        elif (key == "foo2"):
+            self.assertEqual(tag, "tag")
+        elif (key == "foo3"):
+            self.assertEqual(tag, "tag2!@#%^&*)")
+        else:
+            self.assertEqual(key, "unknown key")
+
+  def test_set_links(self):
+    # Create the object
+    bucket = self.client.bucket(self.bucket_name)
+    o = bucket.new(self.key_name, 2)
+    o.links = [(self.bucket_name, "foo1", None),
+               (self.bucket_name, "foo2", "tag"),
+               ("bucket", "foo2", "tag2")]
+    o.store()
+    obj = bucket.get(self.key_name)
+    links = sorted(obj.links, key=lambda x: x[1])
+    self.assertEqual(len(links), 3)
+    self.assertEqual(links[0][1], "foo1")
+    self.assertEqual(links[1][1], "foo2")
+    self.assertEqual(links[1][2], "tag")
+    self.assertEqual(links[2][1], "foo2")
+    self.assertEqual(links[2][2], "tag2")
+
+  def test_link_walking(self):
+    pass
+    # python client lacks http link walking
+
 if __name__ == "__main__":
   unittest.main()

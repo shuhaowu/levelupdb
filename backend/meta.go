@@ -17,6 +17,7 @@ func MetaFromRequest(req *http.Request) (*Meta, error) {
 
 	meta.Links = req.Header.Get("Link")
 	meta.ContentType = req.Header.Get("Content-Type")
+	meta.Meta = make(map[string]string)
 	for headerKey, headerValue := range req.Header {
 		headerValueLength := len(headerValue)
 		if strings.HasPrefix(headerKey, "X-Riak-Index-") && headerValueLength > 0 {
