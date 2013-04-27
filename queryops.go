@@ -2,13 +2,14 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
-	"levelupdb/backend"
-	"net/http"
-	"strings"
-	"mime/multipart"
-	"net/textproto"
 	"container/list"
+	"encoding/json"
+	"fmt"
+	"levelupdb/backend"
+	"mime/multipart"
+	"net/http"
+	"net/textproto"
+	"strings"
 )
 
 type JSONIndexes struct {
@@ -51,7 +52,6 @@ func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, ind
 	}
 	w.Write(d)
 }
-
 
 // Algorithm is BFS. Stolen from Wikipedia :)
 func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key string, walks []string) {
@@ -98,10 +98,11 @@ func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key strin
 					continue
 				}
 
-				if i + 1 == len(walks) || phase[2] == "1" {
-					partHeader := new(http.Header)
-					meta.ToHeaders(*partHeader)
-					wr, err := phasepartWriter.CreatePart(textproto.MIMEHeader(*partHeader))
+				if i+1 == len(walks) || phase[2] == "1" {
+					partHeader := make(http.Header)
+					meta.ToHeaders(partHeader, bucket)
+					partHeader.Set("Location", fmt.Sprintf("/buckets/%s/keys/%s", link.Bucket, link.Key))
+					wr, err := phasepartWriter.CreatePart(textproto.MIMEHeader(partHeader))
 					if err != nil {
 						w.WriteHeader(500)
 						return
@@ -109,17 +110,17 @@ func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key strin
 					wr.Write(body)
 				}
 
-				if i + 1 < len(walks) {
+				if i+1 < len(walks) {
 					nextMeta.PushBack(meta)
 				}
 
 			}
 		}
 		metaToExplore = nextMeta
-		phaseHeader := new(textproto.MIMEHeader)
-		phaseHeader.Set("Content-Type", "multipart/mixed; boundary=" + phasepartWriter.Boundary())
+		phaseHeader := make(textproto.MIMEHeader)
+		phaseHeader.Set("Content-Type", "multipart/mixed; boundary="+phasepartWriter.Boundary())
 		phasepartWriter.Close()
-		wr, err := multipartWriter.CreatePart(*phaseHeader)
+		wr, err := multipartWriter.CreatePart(phaseHeader)
 		if err != nil {
 			w.WriteHeader(500)
 			return
@@ -128,6 +129,8 @@ func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key strin
 		wr.Write(phasepartBuffer.Bytes())
 	}
 
+	w.Header().Set("Content-Type", "multipart/mixed; boundary="+multipartWriter.Boundary())
+	multipartWriter.Close()
 	w.Write(multipartBuffer.Bytes())
 }
 

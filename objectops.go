@@ -36,7 +36,7 @@ func fetchObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		return
 	}
 
-	meta.ToHeaders(w.Header())
+	meta.ToHeaders(w.Header(), bucket)
 	w.Write(data)
 }
 
@@ -77,10 +77,9 @@ func storeObject(w http.ResponseWriter, req *http.Request, bucket string, key st
 		w.Header().Add("Location", "/buckets/"+bucket+"/keys/"+key)
 	}
 
-
 	// This is ugly.
 	if returnbody {
-		meta.ToHeaders(w.Header())
+		meta.ToHeaders(w.Header(), bucket)
 		if created {
 			w.WriteHeader(201)
 		}

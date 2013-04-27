@@ -14,9 +14,9 @@ func InitializeLinkRegexp() {
 }
 
 type Link struct {
-	bucket string
-	key string
-	tag string
+	Bucket string
+	Key string
+	Tag string
 }
 
 func ParseLink(linkstr string) *Link {
@@ -30,10 +30,10 @@ func ParseLink(linkstr string) *Link {
 	}
 
 	link := new(Link)
-	link.bucket = match[2]
-	link.key = match[3]
+	link.Bucket = match[2]
+	link.Key = match[3]
 	if len(match) == 5 {
-		link.tag = match[4]
+		link.Tag = match[4]
 	}
 	return link
 }
@@ -44,7 +44,7 @@ func QueryLinks(linksheader, bucket, tag string) []*Link {
 	results := make([]*Link, 0, len(links))
 	for _, linkstr := range links {
 		link := ParseLink(linkstr)
-		if (link != nil) && (bucket == "_" || link.bucket == bucket) && (tag == "_" || link.tag == tag) {
+		if (link != nil) && (bucket == "_" || link.Bucket == bucket) && (tag == "_" || link.Tag == tag) {
 			results = append(results, link)
 		}
 	}
@@ -52,5 +52,5 @@ func QueryLinks(linksheader, bucket, tag string) []*Link {
 }
 
 func (database *Database) GetObjectFromLink(link *Link) (*Meta, []byte, error){
-	return database.GetObject(link.bucket, link.key)
+	return database.GetObject(link.Bucket, link.Key)
 }

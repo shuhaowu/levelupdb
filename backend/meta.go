@@ -3,6 +3,7 @@ package backend
 import (
 	"net/http"
 	"strings"
+	"fmt"
 )
 
 type Meta struct {
@@ -35,10 +36,12 @@ func MetaFromRequest(req *http.Request) (*Meta, error) {
 	return meta, nil
 }
 
-func (meta *Meta) ToHeaders(headers http.Header) {
+func (meta *Meta) ToHeaders(headers http.Header, bucket string) {
+	links := fmt.Sprintf("</buckets/%s>; rel=\"up\"", bucket)
 	if meta.Links != "" {
-		headers.Add("Link", meta.Links)
+		links += ", " + meta.Links
 	}
+	headers.Add("Link", links)
 	headers.Add("Content-Type", meta.ContentType)
 	for _, index := range meta.Indexes {
 		headers.Add("X-Riak-Index-"+index[0], index[1])
