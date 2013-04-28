@@ -98,3 +98,21 @@ func (buckets *Database) GetAllBucketNames() ([]string, error) {
 	}
 	return bucketNames, nil
 }
+
+func (buckets *Database) GetAllKeys(bucket string) ([]string, error) {
+	if db, ok := buckets.DBMap[bucket]; ok {
+		keys := make([]string, 0)
+		it := db.NewIterator(LReadOptions)
+		it.SeekToFirst()
+		for it = it; it.Valid(); it.Next() {
+			keys = append(keys, string(it.Key()))
+		}
+		err := it.GetError()
+		if err != nil {
+			return nil, err
+		} else {
+			return keys, nil
+		}
+	}
+	return make([]string, 0), nil
+}

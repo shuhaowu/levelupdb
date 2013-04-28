@@ -243,6 +243,18 @@ class KVTests(unittest.TestCase):
     buckets = self.client.get_buckets()
     self.assertTrue(self.bucket_name in [x.name for x in buckets])
 
+  def test_generate_key(self):
+    # Ensure that Riak generates a random key when
+    # the key passed to bucket.new() is None.
+    bucket = self.client.bucket('random_key_bucket')
+    existing_keys = bucket.get_keys()
+    o = bucket.new(None, data={})
+    self.assertIsNone(o.key)
+    o.store()
+    self.assertIsNotNone(o.key)
+    self.assertNotIn('/', o.key)
+    self.assertNotIn(o.key, existing_keys)
+    self.assertEqual(len(bucket.get_keys()), len(existing_keys) + 1)
 
 if __name__ == "__main__":
   unittest.main()

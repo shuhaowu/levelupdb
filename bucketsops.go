@@ -21,7 +21,12 @@ func bucketsOps(w http.ResponseWriter, req *http.Request) {
 			case req.Method == "POST":
 				storeObject(w, req, splitted[0], "")
 			case req.Method == "GET":
-				listKeys(w, req, splitted[0])
+				keys := req.URL.Query().Get("keys")
+				if keys == "true" {
+					listKeys(w, req, splitted[0])
+				} else if keys == "stream" {
+					// TODO: Stream keys
+				}
 			}
 		} else if length == 3 && splitted[1] == "keys" {
 			bucket := splitted[0]
@@ -75,5 +80,22 @@ func listBuckets(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+type allKeys struct {
+	Keys []string `json:"keys"`
+}
+
 func listKeys(w http.ResponseWriter, req *http.Request, bucket string) {
+	var all allKeys
+	keys, err := database.GetAllKeys(bucket)
+	all.Keys = keys
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	if data, err := json.Marshal(all) ; err == nil{
+		w.Write(data)
+	} else {
+		w.WriteHeader(500)
+	}
 }
