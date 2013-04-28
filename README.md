@@ -99,6 +99,9 @@ There are differences between Riak and Levelupdb:
     It's performance on a single node may not be optimal. Levelupdb is designed
     to run on lowendboxes and small VPSes. It makes hosting your side projects
     painless. **It wants to host your side projects**.
+ 8. **List keys and buckets is not a big deal**: Listing keys and buckets do not
+    cost as much as they do in Riak. Listing buckets just takes a directory list
+    and listing all keys only iterate through that specific bucket.
 
 Some more technical differences:
 

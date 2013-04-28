@@ -1,9 +1,9 @@
 package main
 
 import (
-	//	"encoding/json"
 	"net/http"
 	"strings"
+	"encoding/json"
 )
 
 const lenPath = len("/buckets/")
@@ -51,7 +51,28 @@ func bucketsOps(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+type allBuckets struct {
+	Buckets []string `json:"buckets"`
+}
+
 func listBuckets(w http.ResponseWriter, req *http.Request) {
+	var all allBuckets
+	buckets, err := database.GetAllBucketNames()
+	all.Buckets = buckets
+	if err != nil {
+		mainLogger.Println("ERROR: Getting all databases name failed with", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	data, err := json.Marshal(all)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	} else {
+		w.Write(data)
+	}
 }
 
 func listKeys(w http.ResponseWriter, req *http.Request, bucket string) {

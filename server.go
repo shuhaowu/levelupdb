@@ -75,6 +75,7 @@ func main() {
 	http.HandleFunc("/ping", standardHandler(ping))
 	http.HandleFunc("/", standardHandler(listResources))
 	http.HandleFunc("/buckets/", standardHandler(bucketsOps))
+	http.HandleFunc("/buckets", standardHandler(listBuckets))
 	http.HandleFunc("/stats", standardHandler(stats))
 
 	mainLogger.Println("NOTICE: Server started. Serving port " + globalConfig.HttpPort)

@@ -83,3 +83,18 @@ func (buckets *Database) DestroyBucket(name string) error {
 	}
 	return nil
 }
+
+func (buckets *Database) GetAllBucketNames() ([]string, error) {
+	fileinfos, err := ioutil.ReadDir(buckets.BaseLocation)
+	if err != nil {
+		return nil, err
+	}
+	bucketNames := make([]string, len(fileinfos) - 1)
+	for _, info := range fileinfos {
+		name := info.Name()
+		if name != "_indexes" && name != "" {
+			bucketNames = append(bucketNames, name)
+		}
+	}
+	return bucketNames, nil
+}

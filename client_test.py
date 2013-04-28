@@ -237,5 +237,12 @@ class KVTests(unittest.TestCase):
     pass
     # python client lacks http link walking
 
+  def test_list_buckets(self):
+    bucket = self.client.bucket(self.bucket_name)
+    bucket.new("one", {"foo": "one", "bar": "red"}).store()
+    buckets = self.client.get_buckets()
+    self.assertTrue(self.bucket_name in [x.name for x in buckets])
+
+
 if __name__ == "__main__":
   unittest.main()
