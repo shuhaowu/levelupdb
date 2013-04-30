@@ -17,12 +17,44 @@ type JSONIndexes struct {
 }
 
 func secondaryIndex(w http.ResponseWriter, req *http.Request, bucket string, indexField string, startValue string, endValue string) {
+	var r JSONIndexes
+	// TODO: refactor this.
+	// The index operation should be moved to backend
+	if indexField == "$key" {
+		keys, err := database.GetKeysRange(bucket, startValue, endValue)
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+		r.Keys = keys
+		if d, err := json.Marshal(r); err == nil {
+			w.Write(d)
+		} else {
+			w.WriteHeader(500)
+		}
+		return
+	} else if indexField == "$bucket" {
+		// TODO: do we care about start and end value? Riak seems to care if an
+		// end value is thrown into this
+		keys, err := database.GetAllKeys(bucket)
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+		r.Keys = keys
+		if d, err := json.Marshal(r); err == nil {
+			w.Write(d)
+		} else {
+			w.WriteHeader(500)
+		}
+		return
+	}
+
 	indexDb := indexDatabase.GetBucketNoCreate(bucket)
 	if indexDb == nil {
 		w.WriteHeader(404)
 		return
 	}
-	var r JSONIndexes
 	searchKey := []byte(indexField + "~" + startValue)
 	if endValue == "" {
 		keys, err := indexDb.Get(backend.LReadOptions, searchKey)

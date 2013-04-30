@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 	"github.com/jmhodges/levigo"
+	"bytes"
 )
 
 type Database struct {
@@ -97,6 +98,36 @@ func (buckets *Database) GetAllBucketNames() ([]string, error) {
 		}
 	}
 	return bucketNames, nil
+}
+
+func (buckets *Database) GetKeysRange(bucket, start, end string) ([]string, error) {
+	if db, ok := buckets.DBMap[bucket]; ok {
+		keys := make([]string, 0)
+		it := db.NewIterator(LReadOptions) // TODO: Refactor with GetAllKeys
+		it.Seek([]byte(start))
+		var check func(*levigo.Iterator) bool
+		if len(end) == 0 {
+			check = func(*levigo.Iterator) bool {
+				return true
+			}
+		} else {
+			bend := []byte(end)
+			check = func(*levigo.Iterator) bool {
+				return bytes.Compare(bend, it.Key()) < 0
+			}
+		}
+		for it = it; it.Valid() && check(it); it.Next() {
+			keys = append(keys, string(it.Key()))
+		}
+
+		err := it.GetError()
+		if err != nil {
+			return nil, err
+		} else {
+			return keys, err
+		}
+	}
+	return make([]string, 0), nil
 }
 
 func (buckets *Database) GetAllKeys(bucket string) ([]string, error) {
