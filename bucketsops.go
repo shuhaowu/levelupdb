@@ -25,7 +25,7 @@ func bucketsOps(w http.ResponseWriter, req *http.Request) {
 				if keys == "true" {
 					listKeys(w, req, splitted[0])
 				} else if keys == "stream" {
-					// TODO: Stream keys
+					streamKeys(w, req, splitted[0])
 				}
 			}
 		} else if length == 3 && splitted[1] == "keys" {
@@ -97,5 +97,25 @@ func listKeys(w http.ResponseWriter, req *http.Request, bucket string) {
 		w.Write(data)
 	} else {
 		w.WriteHeader(500)
+	}
+}
+
+func streamKeys(w http.ResponseWriter, req *http.Request, bucket string) {
+	var keys allKeys
+
+	keysChannel := make(chan string)
+	go database.StreamAllKeys(bucket, keysChannel)
+
+	key := <-keysChannel
+	for len(key) > 0 {
+		keys.Keys = make([]string, 1)
+		keys.Keys[0] = key
+		if data, err := json.Marshal(keys); err == nil {
+			w.Write(data)
+		} else {
+			w.WriteHeader(500)
+			return
+		}
+		key = <-keysChannel
 	}
 }

@@ -136,7 +136,16 @@ This means a couple of things:
 Installation
 ------------
 
-To be written
+Levelupdb is only tested on Linux. Should run where leveldb and snappy compiles.
+
+To install levelupdb, you need to install snappy and leveldb. Use the latest
+version and you have to manually move the library files for leveldb into your
+system's dev library location.
+
+`go build` should build the binary `levelupdb`
+
+`go install` so you can have it in your `GOPATH`. To run it just use
+`./levelupdb`. Daemonize using your os.
 
 Usage and Configurations
 ------------------------

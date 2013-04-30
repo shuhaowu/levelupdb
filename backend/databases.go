@@ -116,3 +116,18 @@ func (buckets *Database) GetAllKeys(bucket string) ([]string, error) {
 	}
 	return make([]string, 0), nil
 }
+
+
+func (buckets *Database) StreamAllKeys(bucket string, keys chan<- string) {
+	if db, ok := buckets.DBMap[bucket]; ok {
+		it := db.NewIterator(LReadOptions)
+		it.SeekToFirst()
+		for it = it; it.Valid(); it.Next() {
+			keys <- string(it.Key())
+		}
+
+		if err := it.GetError(); err == nil {
+			keys <- ""
+		} // TODO: What about error?
+	}
+}

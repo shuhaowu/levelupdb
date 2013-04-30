@@ -135,5 +135,4 @@ func walkLink(w http.ResponseWriter, req *http.Request, bucket string, key strin
 }
 
 func mapred(w http.ResponseWriter, req *http.Request) {
-
 }
