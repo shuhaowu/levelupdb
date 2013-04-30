@@ -179,3 +179,4 @@ func TestQueryLinks(t *testing.T) {
 		t.Fatal("QueryLinks: Wrong result.")
 	}
 }
+

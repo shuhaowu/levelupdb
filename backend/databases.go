@@ -77,10 +77,9 @@ func (buckets *Database) GetBucketNoCreate(name string) *levigo.DB {
 }
 
 func (buckets *Database) DestroyBucket(name string) error {
-	if db, ok := buckets.DBMap[name]; ok {
-		db.Close() // TODO: use DestroyDatabase instead
+	if _, ok := buckets.DBMap[name]; ok {
 		delete(buckets.DBMap, name)
-		return os.RemoveAll(path.Join(buckets.BaseLocation, name))
+		return levigo.DestroyDatabase(name, levigo.NewOptions())
 	}
 	return nil
 }
@@ -130,6 +129,18 @@ func (buckets *Database) GetKeysRange(bucket, start, end string) ([]string, erro
 	return make([]string, 0), nil
 }
 
+func (buckets *Database) IsBucketEmpty(bucket string) bool {
+	if db, ok := buckets.DBMap[bucket]; ok {
+		it := db.NewIterator(LReadOptions)
+		it.SeekToFirst()
+		return !it.Valid()
+	}
+	return true
+}
+
+// TODO: implement auto bucket garbage collection
+// TODO: test destroy database and is bucket empty
+
 func (buckets *Database) GetAllKeys(bucket string) ([]string, error) {
 	if db, ok := buckets.DBMap[bucket]; ok {
 		keys := make([]string, 0)
@@ -147,7 +158,6 @@ func (buckets *Database) GetAllKeys(bucket string) ([]string, error) {
 	}
 	return make([]string, 0), nil
 }
-
 
 func (buckets *Database) StreamAllKeys(bucket string, keys chan<- string) {
 	if db, ok := buckets.DBMap[bucket]; ok {

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
-	"encoding/json"
 )
 
 const lenPath = len("/buckets/")
@@ -93,7 +93,7 @@ func listKeys(w http.ResponseWriter, req *http.Request, bucket string) {
 		return
 	}
 
-	if data, err := json.Marshal(all) ; err == nil{
+	if data, err := json.Marshal(all); err == nil {
 		w.Write(data)
 	} else {
 		w.WriteHeader(500)

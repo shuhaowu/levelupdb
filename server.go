@@ -13,11 +13,12 @@ import (
 )
 
 const VERSION = "0.1"
+const SERVER_STRING = "levelupdb/" + VERSION + " (someone painted it purple)"
 
 func standardHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, request *http.Request) {
 		header := w.Header()
-		header.Add("Server", "levelupdb/"+VERSION+" (someone painted it purple)")
+		header.Add("Server", SERVER_STRING)
 		fn(w, request)
 		mainLogger.Println("-", request.RemoteAddr, "-", request.Method, request.URL.Path)
 	}
