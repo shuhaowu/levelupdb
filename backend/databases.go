@@ -167,8 +167,6 @@ func (buckets *Database) StreamAllKeys(bucket string, keys chan<- string) {
 			keys <- string(it.Key())
 		}
 
-		if err := it.GetError(); err == nil {
-			keys <- ""
-		} // TODO: What about error?
+		keys <- ""
 	}
 }
